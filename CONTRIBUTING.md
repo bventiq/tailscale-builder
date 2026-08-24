@@ -56,12 +56,17 @@ bump `APK_TOOLS_REF` to match when it moves.
 
 ## Known open questions / verify-before-relying-on
 
-- **`apk mkpkg --script` keyword list**: `post-install`, `pre-deinstall`, and
-  `post-upgrade` are confirmed (from OpenWrt's `include/package-pack.mk`).
-  The full list (e.g. whether `pre-install` exists, and how the second
-  `post-deinstall` case we use for disabling the service should really be
-  named) should be double-checked against `apk mkpkg --help` once the host
-  binary is built, before depending on any additional hook.
+- **`apk mkpkg --script` keyword list**: confirmed by reading apk-tools
+  v3.0.5 source (`src/package.c` / `src/apk_adb.c`) — the full and only valid
+  set is `pre-install`, `post-install`, `pre-deinstall`, `post-deinstall`,
+  `pre-upgrade`, `post-upgrade`. Our use of `post-install`/`post-deinstall`
+  is valid.
+- **`apk mkndx` requires `--allow-untrusted`**: packages produced by
+  `apk mkpkg` without `--sign-key` are unsigned, and `apk mkndx` refuses to
+  index them ("UNTRUSTED signature") unless `--allow-untrusted` is passed.
+  `scripts/publish-index.sh` passes it; this is intentional — we only sign
+  the index itself (`--sign-key` on `mkndx`), not each individual `.apk`,
+  matching Alpine's model. Confirmed against a locally built `apk` binary.
 - **Per-architecture `apk` client compatibility**: this repo's `.apk` +
   `Packages.adb` feed uses a self-hosted, non-official layout. Test against a
   real (or QEMU-emulated) OpenWrt 24.10+ router end-to-end

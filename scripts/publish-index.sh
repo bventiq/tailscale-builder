@@ -19,7 +19,11 @@ log "generating Packages.adb in ${ARCH_DIR}"
   shopt -s nullglob
   apks=(./*.apk)
   [ "${#apks[@]}" -gt 0 ] || die "no .apk files found in ${ARCH_DIR}"
+  # --allow-untrusted: the individual .apk files are intentionally left
+  # unsigned (we only sign the index, matching Alpine's model); without this
+  # flag `apk mkndx` refuses to index them with "UNTRUSTED signature".
   "$APK_BIN" mkndx \
+    --allow-untrusted \
     --output Packages.adb \
     --sign-key "$SIGNING_KEY_FILE" \
     --description "$DESCRIPTION" \
