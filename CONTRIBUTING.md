@@ -9,6 +9,11 @@
    openssl ec -in tailscale-builder-private.pem -pubout -out tailscale-builder.pem
    ```
 
+   (An initial keypair was already generated for this repo and its public
+   half committed at `keys/tailscale-builder.pem`; the private half was
+   handed to you outside version control — go straight to step 2 with that
+   file unless you're rotating to a fresh keypair.)
+
 2. Register the private key as a repo secret:
 
    ```sh
@@ -18,7 +23,8 @@
    Then delete/secure `tailscale-builder-private.pem` locally — it must never
    be committed.
 
-3. Commit the **public** key only, as `keys/tailscale-builder.pem`.
+3. Commit the **public** key only, as `keys/tailscale-builder.pem` (already
+   done for the initial keypair; repeat only if rotating).
 
 4. Enable GitHub Pages: **Settings → Pages → Source = Deploy from a branch →
    `gh-pages` / `/ (root)`**. The `gh-pages` branch itself is created
@@ -63,10 +69,7 @@ bump `APK_TOOLS_REF` to match when it moves.
   fully supported — the official `downloads.openwrt.org` package feed was
   still `.ipk`-based as of this writing, so this exact path has limited
   precedent.
-- **`GOMIPS` value for `mips_24kc`/`mipsel_24kc`**: currently `softfloat`.
-  Some 24Kc-class SoCs do have a hardware FPU; revisit if a particular target
-  would benefit from `hardfloat`.
-- **UPX per-architecture reliability**: if UPX consistently fails for one of
-  the seven architectures (rather than transiently), remove that entry from
+- **UPX per-architecture reliability**: if UPX consistently fails for arm64
+  or amd64 (rather than transiently), remove that entry from
   `scripts/lib/arches.json` rather than weakening the "compression is
   mandatory" policy in `scripts/compress-upx.sh`.

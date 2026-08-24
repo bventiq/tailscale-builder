@@ -1,8 +1,8 @@
 # tailscale-builder
 
 Automatically tracks upstream [Tailscale](https://tailscale.com) releases,
-cross-compiles `tailscaled`/`tailscale` for a curated set of OpenWrt
-architectures, compresses the binaries with UPX, packages them as OpenWrt
+cross-compiles `tailscaled`/`tailscale` for **arm64 and amd64** OpenWrt
+targets, compresses the binaries with UPX, packages them as OpenWrt
 **APKv3 (`.apk`)** packages, and publishes a signed apk repository on GitHub
 Pages so routers running **OpenWrt 24.10+** can install and auto-update
 Tailscale with `apk update && apk upgrade` — no manual downloads.
@@ -17,12 +17,10 @@ Tailscale with `apk update && apk upgrade` — no manual downloads.
 | OpenWrt arch | Typical devices |
 |---|---|
 | `aarch64_generic` | Most 64-bit ARM routers/SBCs |
-| `arm_cortex-a7_neon-vfpv4` | 32-bit ARM, e.g. many IPQ40xx-based devices |
-| `arm_cortex-a9_neon` | 32-bit ARM, e.g. IPQ806x-class devices |
 | `x86_64` | PCs, VMs, NAS boxes |
-| `mips_24kc` | Big-endian MIPS, ath79-class routers |
-| `mipsel_24kc` | Little-endian MIPS, ramips-class routers |
-| `i386_pentium4` | Legacy 32-bit x86 |
+
+Other architectures (32-bit ARM, MIPS, x86) are intentionally out of scope —
+add an entry to `scripts/lib/arches.json` if you need one later.
 
 Your router's architecture is shown under **System → Software** or via
 `apk info -a` / `cat /etc/apk/arch`.

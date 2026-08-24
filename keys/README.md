@@ -6,6 +6,7 @@ the EC keypair used to sign the published apk repository index
 only in the `APK_SIGNING_KEY` GitHub Actions secret.
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for how to generate the keypair and
-register the secret. Until `tailscale-builder.pem` exists in this directory,
-the publish workflow will fail at the "Assemble and sign" step by design —
-that's the signal that initial key setup hasn't been done yet.
+register the secret. The private key generated alongside this public key was
+handed to you outside of version control — register it as the
+`APK_SIGNING_KEY` GitHub Actions secret and delete/secure your local copy;
+it must never be committed here.

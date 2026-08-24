@@ -5,39 +5,9 @@
     "description": "64-bit ARM (most modern ARM routers/SBCs)"
   },
   {
-    "openwrt_arch": "arm_cortex-a7_neon-vfpv4",
-    "goarch": "arm",
-    "goarm": "7",
-    "description": "32-bit ARM Cortex-A7 (e.g. many IPQ40xx-based devices)"
-  },
-  {
-    "openwrt_arch": "arm_cortex-a9_neon",
-    "goarch": "arm",
-    "goarm": "7",
-    "description": "32-bit ARM Cortex-A9 (e.g. IPQ806x-class devices)"
-  },
-  {
     "openwrt_arch": "x86_64",
     "goarch": "amd64",
     "goamd64": "v1",
     "description": "64-bit x86 (PCs, VMs, NAS boxes)"
-  },
-  {
-    "openwrt_arch": "mips_24kc",
-    "goarch": "mips",
-    "gomips": "softfloat",
-    "description": "Big-endian MIPS (ath79-class routers)"
-  },
-  {
-    "openwrt_arch": "mipsel_24kc",
-    "goarch": "mipsle",
-    "gomips": "softfloat",
-    "description": "Little-endian MIPS (ramips-class routers)"
-  },
-  {
-    "openwrt_arch": "i386_pentium4",
-    "goarch": "386",
-    "go386": "sse2",
-    "description": "Legacy 32-bit x86"
   }
 ]
