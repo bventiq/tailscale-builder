@@ -1,0 +1,7 @@
+/out/
+/dist/
+/src/
+/gh-pages/
+*.apk
+*.pem
+!keys/tailscale-builder.pem

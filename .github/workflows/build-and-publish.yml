@@ -1,0 +1,148 @@
+name: Build and publish tailscale apk feed
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Rebuild and republish even if the version is unchanged'
+        type: boolean
+        default: false
+
+concurrency:
+  group: tailscale-apk-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      should_build: ${{ steps.check.outputs.should_build }}
+      arches: ${{ steps.matrix.outputs.arches }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCE_REBUILD: ${{ inputs.force_rebuild }}
+        run: bash scripts/check-latest-version.sh
+      - id: matrix
+        run: echo "arches=$(jq -c . scripts/lib/arches.json)" >> "$GITHUB_OUTPUT"
+
+  build-apk-tools:
+    needs: check-version
+    if: needs.check-version.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build pkg-config libssl-dev zlib1g-dev liblua5.1-0-dev build-essential
+      - name: Build host apk-tools
+        run: bash scripts/build-apk-tools.sh "$RUNNER_TEMP/apk-tools-src" out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-tools-host
+          path: out/apk
+          retention-days: 1
+
+  build:
+    needs: [check-version, build-apk-tools]
+    if: needs.check-version.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.check-version.outputs.arches) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: GO_VERSION
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk-tools-host
+          path: apk-tools-host
+      - run: chmod +x apk-tools-host/apk
+      - name: Install UPX
+        run: bash scripts/install-upx.sh "$RUNNER_TEMP/upx-bin"
+      - name: Fetch tailscale source
+        run: bash scripts/fetch-tailscale-src.sh "${{ needs.check-version.outputs.version }}" "$RUNNER_TEMP/src"
+      - name: Cross-compile tailscaled
+        env:
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+          GOMIPS: ${{ matrix.gomips }}
+          GO386: ${{ matrix.go386 }}
+          GOAMD64: ${{ matrix.goamd64 }}
+        run: bash scripts/build-tailscaled.sh "$RUNNER_TEMP/src" "$RUNNER_TEMP/bin" "${{ needs.check-version.outputs.version }}" 1
+      - name: Compress with UPX (required - see scripts/compress-upx.sh)
+        env:
+          UPX_BIN: ${{ runner.temp }}/upx-bin/upx
+        run: bash scripts/compress-upx.sh "$RUNNER_TEMP/bin/tailscaled"
+      - name: Package as .apk
+        env:
+          APK_BIN: ${{ github.workspace }}/apk-tools-host/apk
+        run: bash scripts/package-apk.sh "$RUNNER_TEMP/bin" "${{ matrix.openwrt_arch }}" "${{ needs.check-version.outputs.version }}" 1 "dist/${{ matrix.openwrt_arch }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ matrix.openwrt_arch }}
+          path: dist/${{ matrix.openwrt_arch }}/*.apk
+          retention-days: 1
+
+  publish:
+    needs: [check-version, build-apk-tools, build]
+    if: needs.check-version.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk-tools-host
+          path: apk-tools-host
+      - run: chmod +x apk-tools-host/apk
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: apk-*
+          path: artifacts
+      - name: Prepare signing key
+        run: |
+          umask 077
+          printf '%s' "${{ secrets.APK_SIGNING_KEY }}" > "$RUNNER_TEMP/signing.pem"
+          test -s "$RUNNER_TEMP/signing.pem" || { echo "::error::APK_SIGNING_KEY secret is empty or unset"; exit 1; }
+      - name: Checkout or create gh-pages worktree
+        run: |
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages:refs/remotes/origin/gh-pages
+            git worktree add gh-pages refs/remotes/origin/gh-pages
+          else
+            git worktree add --detach gh-pages
+            git -C gh-pages checkout --orphan gh-pages
+            git -C gh-pages rm -rf . >/dev/null 2>&1 || true
+          fi
+      - name: Assemble and sign published tree
+        env:
+          APK_BIN: ${{ github.workspace }}/apk-tools-host/apk
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: bash scripts/assemble-and-sign.sh gh-pages artifacts "${{ needs.check-version.outputs.version }}" "$RUNNER_TEMP/signing.pem"
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/signing.pem"
+      - name: Commit and push gh-pages
+        working-directory: gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing changed on gh-pages, skipping commit."
+          else
+            git commit -m "Publish tailscale ${{ needs.check-version.outputs.version }}"
+            git push origin HEAD:gh-pages
+          fi
