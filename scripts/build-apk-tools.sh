@@ -37,8 +37,14 @@ meson setup "$WORKDIR/build" "$WORKDIR" \
   -Dtests=disabled \
   -Dcrypto_backend=openssl
 
-ninja -C "$WORKDIR/build" apk
+ninja -C "$WORKDIR/build"
 
-install -m 0755 "$WORKDIR/build/apk" "$OUT_DIR/apk"
+# The exact ninja target/output path for the CLI binary varies by apk-tools
+# version (e.g. it may live under src/), so locate it by name instead of
+# hardcoding a path.
+apk_bin="$(find "$WORKDIR/build" -maxdepth 3 -type f -name apk -perm -u+x | head -n1)"
+[ -n "$apk_bin" ] || die "could not locate a built 'apk' binary under $WORKDIR/build"
+
+install -m 0755 "$apk_bin" "$OUT_DIR/apk"
 log "built apk-tools -> $OUT_DIR/apk"
 "$OUT_DIR/apk" --version
