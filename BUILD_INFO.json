@@ -1,0 +1,14 @@
+{
+  "tailscale_version": "1.102.3",
+  "built_at": "2026-08-24T03:19:57Z",
+  "arches": {
+    "aarch64_generic": {
+      "file": "tailscale-1.102.3-r1.apk",
+      "sha256": "642088d4456b329482f425bd1d9f5b0d6231c493d69a59855473c32964ce3594"
+    },
+    "x86_64": {
+      "file": "tailscale-1.102.3-r1.apk",
+      "sha256": "ce09e65362a03852a6a9f68348ac112e7d4192e41ae992cbdf9e29426a5291ed"
+    }
+  }
+}
