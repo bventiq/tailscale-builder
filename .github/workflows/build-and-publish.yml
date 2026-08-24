@@ -43,7 +43,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson ninja-build pkg-config libssl-dev zlib1g-dev liblua5.1-0-dev build-essential
+          sudo apt-get install -y meson ninja-build pkg-config libssl-dev zlib1g-dev lua5.1 liblua5.1-0-dev build-essential
       - name: Build host apk-tools
         run: bash scripts/build-apk-tools.sh "$RUNNER_TEMP/apk-tools-src" out
       - uses: actions/upload-artifact@v4
