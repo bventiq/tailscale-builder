@@ -20,7 +20,9 @@ OUT_DIR="${2:?usage: build-apk-tools.sh <workdir> <out_dir>}"
 mkdir -p "$OUT_DIR"
 
 if [ ! -d "$WORKDIR/.git" ]; then
-  git clone https://gitlab.alpinelinux.org/alpine/apk-tools.git "$WORKDIR"
+  # Use the GitHub mirror rather than gitlab.alpinelinux.org directly: GitLab's
+  # anti-scraping defenses return HTTP 418 to GitHub Actions runner IP ranges.
+  git clone https://github.com/alpinelinux/apk-tools.git "$WORKDIR"
 fi
 git -C "$WORKDIR" fetch --depth 1 origin "$APK_TOOLS_REF"
 git -C "$WORKDIR" checkout --detach "$APK_TOOLS_REF"
