@@ -1,14 +1,14 @@
 {
-  "tailscale_version": "1.104.1",
-  "built_at": "2026-10-07T22:52:58Z",
+  "tailscale_version": "1.104.2",
+  "built_at": "2026-10-21T03:41:03Z",
   "arches": {
     "aarch64_generic": {
-      "file": "tailscale-1.104.1-r1.apk",
-      "sha256": "fb8dee63089de377db98c6b7baeeb69984f6c29f302b8fecfd74512ee5e8ed76"
+      "file": "tailscale-1.104.2-r1.apk",
+      "sha256": "27807a1da446d1f20b0f3628a05ec39ad97cae2e340d4d32a42178dc7e59e2a8"
     },
     "x86_64": {
-      "file": "tailscale-1.104.1-r1.apk",
-      "sha256": "ab0bdc7896ca5b6992babc855819ed50ca9f1690e16406962b5e180e7d568b82"
+      "file": "tailscale-1.104.2-r1.apk",
+      "sha256": "a6e062fde49130e2ace0da6da95f747c03bf366b6c6db505653041019e936ff8"
     }
   }
 }
